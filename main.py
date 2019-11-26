@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 from PIL import Image
 from distutils.version import LooseVersion
-
+from torch.autograd import Variable
 from sacred import Experiment
 from easydict import EasyDict as edict
 
@@ -14,6 +14,7 @@ import torch
 from torch.utils import data
 import torch.nn.functional as F
 import torchvision.transforms as tf
+import torchvision
 
 from models.baseline_same import Baseline as UNet
 from utils.loss import hinge_embedding_loss, surface_normal_loss, parameter_loss, \
@@ -27,6 +28,7 @@ from modules import get_coordinate_map
 from utils.loss import Q_loss
 from instance_parameter_loss import InstanceParameterLoss
 from match_segmentation import MatchSegmentation
+
 
 ex = Experiment()
 
@@ -244,7 +246,7 @@ def train(_run, _log):
             gt_depth = sample['depth'].to(device)
             gt_seg = sample['gt_seg'].to(device)
             gt_plane_parameters = sample['plane_parameters'].to(device)
-            valid_region = sample['valid_region'].to(device)
+            valid_region = sample['valid_region'].to(device).bool()
             gt_plane_instance_parameter = sample['plane_instance_parameter'].to(device)
 
             # forward pass
@@ -263,7 +265,7 @@ def train(_run, _log):
 
                 _loss_binary = class_balanced_cross_entropy_loss(logit[i], semantic[i])
 
-                _loss_normal, mean_angle = surface_normal_loss(param[i:i+1], gt_plane_parameters[i:i+1],
+                _loss_normal, mean_angle, _, _ = surface_normal_loss(param[i:i+1], gt_plane_parameters[i:i+1],
                                                                valid_region[i:i+1])
 
                 _loss_L1 = parameter_loss(param[i:i + 1], gt_plane_parameters[i:i + 1], valid_region[i:i + 1])
@@ -335,7 +337,6 @@ def train(_run, _log):
                           f"Depth: {losses_depth.val:.4f} ({losses_depth.avg:.4f}) "
                           f"INSDEPTH: {instance_rmses.val:.4f} ({instance_rmses.avg:.4f}) "
                           f"RMSE: {rmses.val:.4f} ({rmses.avg:.4f}) ")
-
         _log.info(f"* epoch: {epoch:2d}\t"
                   f"Loss: {losses.avg:.6f}\t"
                   f"Pull: {losses_pull.avg:.6f}\t"

@@ -43,7 +43,7 @@ def hinge_embedding_loss(embedding, num_planes, segmentation, device, t_pull=0.5
 
     num_planes = num_planes.numpy()[0]
     embedding = embedding[0]
-    segmentation = segmentation[0]
+    segmentation = segmentation[0].bool()
     embeddings = []
     # select embedding with segmentation
     for i in range(num_planes):
@@ -97,7 +97,7 @@ def surface_normal_loss(prediction, surface_normal, valid_region):
 
     loss = torch.mean(1-similarity)
     mean_angle = torch.mean(torch.acos(torch.clamp(similarity, -1, 1)))
-    return loss, mean_angle / np.pi * 180
+    return loss, mean_angle / np.pi * 180, torch.nn.functional.normalize(valid_predition, dim=1, p=2), valid_predition
 
 
 # L1 parameter loss

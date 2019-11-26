@@ -1,4 +1,6 @@
 import os
+import open3d as o3d
+from matplotlib import cm
 import cv2
 import random
 import numpy as np
@@ -18,6 +20,7 @@ from utils.disp import colors_256 as colors
 from bin_mean_shift import Bin_Mean_Shift
 from modules import get_coordinate_map
 from utils.loss import Q_loss
+from utils.loss import surface_normal_loss
 from instance_parameter_loss import InstanceParameterLoss
 
 ex = Experiment()
@@ -88,6 +91,9 @@ def predict(_run, _log):
         instance_loss, instance_depth, instance_abs_disntace, instance_parameter = instance_parameter_loss(
             segmentation, sampled_segmentation, sample_param, torch.ones_like(logit), torch.ones_like(logit), False)
 
+        # infer instance normal
+        _, _, manhattan_norm, instance_norm = surface_normal_loss(param, torch.ones_like(image), None)
+
         # return cluster results
         predict_segmentation = segmentation.cpu().numpy().argmax(axis=1)
 
@@ -100,6 +106,16 @@ def predict(_run, _log):
         mask = (prob > 0.1).float().cpu().numpy().reshape(h, w)
         depth = instance_depth.cpu().numpy()[0, 0].reshape(h, w)
         per_pixel_depth = per_pixel_depth.cpu().numpy()[0, 0].reshape(h, w)
+        manhattan_normal_2d = manhattan_norm.cpu().numpy().reshape(h, w, 3) * np.expand_dims((predict_segmentation != 20), -1)
+        instance_normal_2d = instance_norm.cpu().numpy().reshape(h, w, 3) * np.expand_dims((predict_segmentation != 20), -1)
+        pcd = o3d.geometry.PointCloud()
+        norm_colors = cm.Set3(predict_segmentation.reshape(w*h))
+        pcd.points = o3d.utility.Vector3dVector(np.reshape(manhattan_normal_2d, (w*h , 3)))
+        pcd.colors = o3d.utility.Vector3dVector(norm_colors[:,0:3])
+        o3d.io.write_point_cloud('./manhattan_sphere.ply', pcd)
+        pcd.points = o3d.utility.Vector3dVector(np.reshape(instance_normal_2d, (w*h , 3)))
+        o3d.io.write_point_cloud('./instance_sphere.ply', pcd)
+        normal_plot = cv2.resize(((manhattan_normal_2d+1) * 128).astype(np.uint8), (w, h))
 
         # use per pixel depth for non planar region
         depth = depth * (predict_segmentation != 20) + per_pixel_depth * (predict_segmentation == 20)
@@ -122,7 +138,88 @@ def predict(_run, _log):
         depth = 255 - np.clip(depth / 5 * 255, 0, 255).astype(np.uint8)
         depth = cv2.cvtColor(cv2.resize(depth, (w, h)), cv2.COLOR_GRAY2BGR)
 
-        image = np.concatenate((image, pred_seg, blend_pred, mask, depth), axis=1)
+        Camera_fx = 481.2
+        Camera_fy = 480.0
+        Camera_cx = -319.5
+        Camera_cy = 239.50
+
+        ##
+        # Camera_fx = 535.4
+        # Camera_fy = 539.2
+        # Camera_cx = 320.1
+        # Camera_cy = 247.6
+
+        Camera_fx = 518.8
+        Camera_fy = 518.8
+        Camera_cx = 320
+        Camera_cy = 240
+        points = []
+        points_instance=[]
+        scalingFactor = 1.0
+        for v in range(h):
+            for u in range(w):
+                color = image[v, u]
+                color_instance=pred_seg[v,u]
+                Z = depth[v, u]/scalingFactor
+                print(Z)
+                if Z == 0: continue
+                X = (u - Camera_cx/2) * Z / Camera_fx*2
+                Y = (v - Camera_cy/2) * Z / Camera_fy*2
+                points.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color[2], color[1], color[0]))
+                points_instance.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color_instance[2], color_instance[1], color_instance[0]))
+        file = open('./pointCloud.ply', "w")
+        file1 = open('./pointCloud_instance.ply', "w")
+        file.write('''ply
+                format ascii 1.0
+                element vertex %d
+                property float x
+                property float y
+                property float z
+                property uchar red
+                property uchar green
+                property uchar blue
+                property uchar alpha
+                end_header
+                %s
+                ''' % (len(points), "".join(points)))
+        file1.write('''ply
+                       format ascii 1.0
+                       element vertex %d
+                       property float x
+                       property float y
+                       property float z
+                       property uchar red
+                       property uchar green
+                       property uchar blue
+                       property uchar alpha
+                       end_header
+                       %s
+                       ''' % (len(points_instance), "".join(points_instance)))
+        file.close()
+        file1.close()
+
+        depth_norm = cv2.cvtColor(cv2.resize(depth_norm, (w, h)), cv2.COLOR_GRAY2BGR)
+        cv2.imwrite("./depth.png", depth_norm)
+        #cv2.imwrite("./rgb.png",image)
+
+
+
+        #
+        # camera_fx = 588.03
+        # camera_fy = 587.07
+        #
+        # for m in range(0, h):
+        #     for n in range(0, w):
+        #         d = depth[m][n][0] + depth[m][n][1] * 256
+        #         if d == 0:
+        #             pass
+        #         else:
+        #             z = float(d)
+        #             x = n * z / camera_fx
+        #             y = m * z / camera_fy
+        #             points = [x, y, z]
+
+        image = np.concatenate((image, pred_seg, blend_pred, mask, depth, normal_plot), axis=1)
 
         cv2.imshow('image', image)
         cv2.waitKey(0)
