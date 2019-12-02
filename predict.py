@@ -165,23 +165,23 @@ def predict(_run, _log):
                 if Z == 0: continue
                 X = (u - Camera_cx/2) * Z / Camera_fx*2
                 Y = (v - Camera_cy/2) * Z / Camera_fy*2
-                points.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color[2], color[1], color[0]))
+                # points.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color[2], color[1], color[0]))
                 points_instance.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color_instance[2], color_instance[1], color_instance[0]))
-        file = open('./pointCloud.ply', "w")
+        # file = open('./pointCloud.ply', "w")
         file1 = open('./pointCloud_instance.ply', "w")
-        file.write('''ply
-                format ascii 1.0
-                element vertex %d
-                property float x
-                property float y
-                property float z
-                property uchar red
-                property uchar green
-                property uchar blue
-                property uchar alpha
-                end_header
-                %s
-                ''' % (len(points), "".join(points)))
+        # file.write('''ply
+        #        format ascii 1.0
+        #        element vertex %d
+        #        property float x
+        #        property float y
+        ##        property float z
+        #        property uchar red
+        #        property uchar green
+        #        property uchar blue
+        #        property uchar alpha
+        #        end_header
+        #        %s
+        #        ''' % (len(points), "".join(points)))
         file1.write('''ply
                        format ascii 1.0
                        element vertex %d
@@ -195,7 +195,7 @@ def predict(_run, _log):
                        end_header
                        %s
                        ''' % (len(points_instance), "".join(points_instance)))
-        file.close()
+        # file.close()
         file1.close()
 
         depth_norm = cv2.cvtColor(cv2.resize(depth_norm, (w, h)), cv2.COLOR_GRAY2BGR)
