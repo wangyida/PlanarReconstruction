@@ -160,7 +160,7 @@ def predict(_run, _log):
             for u in range(w):
                 color = image[v, u]
                 color_instance=pred_seg[v,u]
-                Z = depth[v, u]/scalingFactor
+                Z = (depth[v, u]/scalingFactor)[0]
                 print(Z)
                 if Z == 0: continue
                 X = (u - Camera_cx/2) * Z / Camera_fx*2
