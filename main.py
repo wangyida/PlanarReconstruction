@@ -542,8 +542,8 @@ def eval(_run, _log):
             # save some point clouds
             Camera_fx = 518.8
             Camera_fy = 518.8
-            Camera_cx = 320
-            Camera_cy = 240
+            Camera_cy = 320
+            Camera_cx = 240
             points = []
             points_instance=[]
             scalingFactor = 1.0
@@ -557,7 +557,7 @@ def eval(_run, _log):
                     if Z == 0: continue
                     X = (u - Camera_cx/2) * Z / Camera_fx*2
                     Y = (v - Camera_cy/2) * Z / Camera_fy*2
-                    points_feat = np.concatenate((points_feat, [X,Z,Y,label_instance/21,label_instance/21,label_instance/21]), axis = 0)
+                    points_feat = np.concatenate((points_feat, [X,Z,Y,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
             save_pcd('./pointCloud_instance.ply', points_feat)
 
