@@ -540,10 +540,10 @@ def eval(_run, _log):
             # cv2.imwrite("%d_segmentation.png"%iter, image)
 
             # save some point clouds
-            Camera_fx = 518.8
-            Camera_fy = 518.8
-            Camera_cy = 320
-            Camera_cx = 240
+            Camera_fx = 517.97
+            Camera_fy = 517.97
+            Camera_cx = 320
+            Camera_cy = 240
             points = []
             points_instance=[]
             scalingFactor = 1.0
