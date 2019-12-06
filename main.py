@@ -3,6 +3,7 @@ import cv2
 import time
 import random
 import pickle
+import open3d
 import numpy as np
 from PIL import Image
 from distutils.version import LooseVersion
@@ -30,8 +31,15 @@ from instance_parameter_loss import InstanceParameterLoss
 from match_segmentation import MatchSegmentation
 
 
+
 ex = Experiment()
 
+def save_pcd(filename, points):
+    open3d.utility.set_verbosity_level(open3d.utility.VerbosityLevel.Error)
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.utility.Vector3dVector(points[:,0:3])
+    pcd.colors = open3d.utility.Vector3dVector(points[:,3:6])
+    open3d.io.write_point_cloud(filename, pcd)
 
 class PlaneDataset(data.Dataset):
     def __init__(self, subset='train', transform=None, root_dir=None):
@@ -530,6 +538,29 @@ def eval(_run, _log):
             # cv2.imshow('image', image)
             # cv2.waitKey(0)
             # cv2.imwrite("%d_segmentation.png"%iter, image)
+
+            # save some point clouds
+            Camera_fx = 518.8
+            Camera_fy = 518.8
+            Camera_cx = 320
+            Camera_cy = 240
+            points = []
+            points_instance=[]
+            scalingFactor = 1.0
+            points_feat = np.array([])
+            for v in range(h):
+                for u in range(w):
+                    color = image[v, u]
+                    color_instance=pred_seg[v, u]
+                    label_instance=predict_segmentation[v, u]
+                    Z = (depth[v, u]/scalingFactor)[0]
+                    if Z == 0: continue
+                    X = (u - Camera_cx/2) * Z / Camera_fx*2
+                    Y = (v - Camera_cy/2) * Z / Camera_fy*2
+                    points_feat = np.concatenate((points_feat, [X,Z,Y,label_instance/21,label_instance/21,label_instance/21]), axis = 0)
+            points_feat = points_feat.reshape((-1,6))
+            save_pcd('./pointCloud_instance.ply', points_feat)
+
 
         print("========================================")
         print("pixel and plane recall of all test image")

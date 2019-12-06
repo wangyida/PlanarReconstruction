@@ -167,21 +167,7 @@ def predict(_run, _log):
                 Y = (v - Camera_cy/2) * Z / Camera_fy*2
                 # points.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color[2], color[1], color[0]))
                 points_instance.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color_instance[2], color_instance[1], color_instance[0]))
-        # file = open('./pointCloud.ply', "w")
         file1 = open('./pointCloud_instance.ply', "w")
-        # file.write('''ply
-        #        format ascii 1.0
-        #        element vertex %d
-        #        property float x
-        #        property float y
-        ##        property float z
-        #        property uchar red
-        #        property uchar green
-        #        property uchar blue
-        #        property uchar alpha
-        #        end_header
-        #        %s
-        #        ''' % (len(points), "".join(points)))
         file1.write('''ply
                        format ascii 1.0
                        element vertex %d
@@ -195,29 +181,12 @@ def predict(_run, _log):
                        end_header
                        %s
                        ''' % (len(points_instance), "".join(points_instance)))
-        # file.close()
         file1.close()
 
         depth_norm = cv2.cvtColor(cv2.resize(depth_norm, (w, h)), cv2.COLOR_GRAY2BGR)
         cv2.imwrite("./depth.png", depth_norm)
         #cv2.imwrite("./rgb.png",image)
 
-
-
-        #
-        # camera_fx = 588.03
-        # camera_fy = 587.07
-        #
-        # for m in range(0, h):
-        #     for n in range(0, w):
-        #         d = depth[m][n][0] + depth[m][n][1] * 256
-        #         if d == 0:
-        #             pass
-        #         else:
-        #             z = float(d)
-        #             x = n * z / camera_fx
-        #             y = m * z / camera_fy
-        #             points = [x, y, z]
 
         image = np.concatenate((image, pred_seg, blend_pred, mask, depth, normal_plot), axis=1)
 
