@@ -545,7 +545,7 @@ def eval(_run, _log):
             Camera_cx = 320
             Camera_cy = 240
             ratio_x = 640/256.0
-            ratio_y = 480/196.0
+            ratio_y = 480/192.0
             points = []
             points_instance=[]
             scalingFactor = 1.0
@@ -557,12 +557,10 @@ def eval(_run, _log):
                     label_instance=predict_segmentation[v, u]
                     Z = (depth[v, u]/scalingFactor)[0]
                     if Z == 0: continue
-                    # X = (u - Camera_cx/2) * Z / Camera_fx*2
-                    # Y = (v - Camera_cy/2) * Z / Camera_fy*2
-                    X = (u - Camera_cx/ratio_x) * Z / Camera_fx*ratio_x
-                    Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
                     # X = (u - Camera_cx) * Z / Camera_fx
                     # Y = (v - Camera_cy) * Z / Camera_fy
+                    X = (u - Camera_cx/ratio_x) * Z / Camera_fx*ratio_x
+                    Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
                     points_feat = np.concatenate((points_feat, [X,Z,Y,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
             save_pcd('./pointCloud_instance.ply', points_feat)
