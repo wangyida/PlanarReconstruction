@@ -537,7 +537,7 @@ def eval(_run, _log):
 
             # cv2.imshow('image', image)
             # cv2.waitKey(0)
-            # cv2.imwrite("%d_segmentation.png"%iter, image)
+            cv2.imwrite("results/%d_segmentation.png"%iter, image)
 
             # save some point clouds
             Camera_fx = 517.97
@@ -563,7 +563,7 @@ def eval(_run, _log):
                     Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
                     points_feat = np.concatenate((points_feat, [X,Z,Y,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
-            save_pcd('./pointCloud_instance.ply', points_feat)
+            save_pcd("results/%d_points.ply"%iter, points_feat)
 
 
         print("========================================")
