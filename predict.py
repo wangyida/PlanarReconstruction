@@ -161,10 +161,11 @@ def predict(_run, _log):
                 color = image[v, u]
                 color_instance=pred_seg[v,u]
                 Z = (depth[v, u]/scalingFactor)[0]
-                print(Z)
                 if Z == 0: continue
-                X = (u - Camera_cx/2) * Z / Camera_fx*2
-                Y = (v - Camera_cy/2) * Z / Camera_fy*2
+                # X = (u - Camera_cx/2) * Z / Camera_fx*2
+                # Y = (v - Camera_cy/2) * Z / Camera_fy*2
+                X = (u - Camera_cx) * Z / Camera_fx
+                Y = (v - Camera_cy) * Z / Camera_fy
                 # points.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color[2], color[1], color[0]))
                 points_instance.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color_instance[2], color_instance[1], color_instance[0]))
         file1 = open('./pointCloud_instance.ply', "w")
