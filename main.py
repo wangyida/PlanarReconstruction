@@ -538,7 +538,7 @@ def eval(_run, _log):
 
             # cv2.imshow('image', image)
             # cv2.waitKey(0)
-            # cv2.imwrite("results/images/%d_segmentation.png"%iter, image)
+            cv2.imwrite("results/images/%d_segmentation.png"%iter, image)
 
             # save some point clouds
             Camera_fx = 518.8
@@ -547,8 +547,6 @@ def eval(_run, _log):
             Camera_cy = 240
             ratio_x = 640/256.0
             ratio_y = 480/192.0
-            points = []
-            points_instance=[]
             scalingFactor = 1.0
             points_feat = np.array([])
             for v in range(h):
@@ -562,8 +560,9 @@ def eval(_run, _log):
                     Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
                     points_feat = np.concatenate((points_feat, [X,Y,Z,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
-            save_pcd("results/gt/%d_points.pcd"%iter, points_feat)
+            save_pcd("results/complete/%d_points.pcd"%iter, points_feat)
 
+            points_feat = np.array([])
             for v in range(h):
                 for u in range(w):
                     color = image[v, u]
@@ -575,7 +574,7 @@ def eval(_run, _log):
                     Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
                     points_feat = np.concatenate((points_feat, [X,Y,Z,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
-            save_pcd("results/input/%d_points.pcd"%iter, points_feat)
+            save_pcd("results/partial/%d_points.pcd"%iter, points_feat)
 
         print("========================================")
         print("pixel and plane recall of all test image")
