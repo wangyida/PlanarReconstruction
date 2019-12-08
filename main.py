@@ -562,10 +562,10 @@ def eval(_run, _log):
                     # print(gt_depth_origin[v,u])
                     Z = (gt_depth_origin[v, u]/scalingFactor)[0]
                     if Z == 0: continue
-                    # X = (u - Camera_cx) * Z / Camera_fx
-                    # Y = (v - Camera_cy) * Z / Camera_fy
-                    X = (u - Camera_cx/2) * Z / Camera_fx
-                    Y = (v - Camera_cy/2) * Z / Camera_fy
+                    X = (u - Camera_cx) * Z / Camera_fx
+                    Y = (v - Camera_cy) * Z / Camera_fy
+                    # X = (u - Camera_cx/2) * Z / Camera_fx
+                    # Y = (v - Camera_cy/2) * Z / Camera_fy
                     points_feat = np.concatenate((points_feat, [X,Y,Z,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
             save_pcd("results/%d_points.ply"%iter, points_feat)
