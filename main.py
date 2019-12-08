@@ -522,10 +522,11 @@ def eval(_run, _log):
             depth_diff = np.clip(depth_diff / 5 * 255, 0, 255).astype(np.uint8)
             depth_diff = cv2.cvtColor(cv2.resize(depth_diff, (w, h)), cv2.COLOR_GRAY2BGR)
 
+            depth_real = cv2.cvtColor(cv2.resize(depth, (w, h)), cv2.COLOR_GRAY2BGR)
             depth = 255 - np.clip(depth / 5 * 255, 0, 255).astype(np.uint8)
             depth = cv2.cvtColor(cv2.resize(depth, (w, h)), cv2.COLOR_GRAY2BGR)
 
-            gt_depth_origin = cv2.cvtColor(cv2.resize(gt_depth, (w, h)), cv2.COLOR_GRAY2BGR)
+            gt_depth_real = cv2.cvtColor(cv2.resize(gt_depth, (w, h)), cv2.COLOR_GRAY2BGR)
             gt_depth = 255 - np.clip(gt_depth / 5 * 255, 0, 255).astype(np.uint8)
             gt_depth = cv2.cvtColor(cv2.resize(gt_depth, (w, h)), cv2.COLOR_GRAY2BGR)
 
@@ -537,17 +538,13 @@ def eval(_run, _log):
 
             # cv2.imshow('image', image)
             # cv2.waitKey(0)
-            cv2.imwrite("results/%d_segmentation.png"%iter, image)
+            # cv2.imwrite("results/images/%d_segmentation.png"%iter, image)
 
             # save some point clouds
             Camera_fx = 518.8
             Camera_fy =518.8
             Camera_cx = 320
             Camera_cy = 240
-            #Camera_fy = 517.97
-
-            #Camera_cx = 320
-            #Camera_cy = 240
             ratio_x = 640/256.0
             ratio_y = 480/192.0
             points = []
@@ -556,20 +553,29 @@ def eval(_run, _log):
             points_feat = np.array([])
             for v in range(h):
                 for u in range(w):
-                    color = image[v, u]#row v, col w
+                    color = image[v, u]
                     color_instance=pred_seg[v, u]
                     label_instance=predict_segmentation[v, u]
-                    # print(gt_depth_origin[v,u])
-                    Z = (gt_depth_origin[v, u]/scalingFactor)[0]
+                    Z = (gt_depth_real[v, u]/scalingFactor)[0]
                     if Z == 0: continue
                     X = (u - Camera_cx/ratio_x) * Z / Camera_fx*ratio_x
                     Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
-                    # X = (u - Camera_cx/2) * Z / Camera_fx
-                    # Y = (v - Camera_cy/2) * Z / Camera_fy
                     points_feat = np.concatenate((points_feat, [X,Y,Z,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
-            save_pcd("results/%d_points.ply"%iter, points_feat)
+            save_pcd("results/gt/%d_points.pcd"%iter, points_feat)
 
+            for v in range(h):
+                for u in range(w):
+                    color = image[v, u]
+                    color_instance=pred_seg[v, u]
+                    label_instance=predict_segmentation[v, u]
+                    Z = (depth_real[v, u]/scalingFactor)[0]
+                    if Z == 0: continue
+                    X = (u - Camera_cx/ratio_x) * Z / Camera_fx*ratio_x
+                    Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
+                    points_feat = np.concatenate((points_feat, [X,Y,Z,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
+            points_feat = points_feat.reshape((-1,6))
+            save_pcd("results/input/%d_points.pcd"%iter, points_feat)
 
         print("========================================")
         print("pixel and plane recall of all test image")
