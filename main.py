@@ -547,8 +547,6 @@ def eval(_run, _log):
             Camera_cy = 240
             ratio_x = 640/256.0
             ratio_y = 480/192.0
-            points = []
-            points_instance=[]
             scalingFactor = 1.0
             points_feat = np.array([])
             for v in range(h):
@@ -564,6 +562,7 @@ def eval(_run, _log):
             points_feat = points_feat.reshape((-1,6))
             save_pcd("results/gt/%d_points.pcd"%iter, points_feat)
 
+            points_feat = np.array([])
             for v in range(h):
                 for u in range(w):
                     color = image[v, u]
