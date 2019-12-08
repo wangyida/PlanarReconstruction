@@ -266,7 +266,7 @@ def train(_run, _log):
             # calculate loss
             loss, loss_pull, loss_push, loss_binary, loss_depth, loss_normal, loss_parameters, loss_pw, loss_instance \
                 = 0., 0., 0., 0., 0., 0., 0., 0., 0.
-            batch_size = image.size(0)
+            cd = image.size(0)
             for i in range(batch_size):
                 _loss, _loss_pull, _loss_push = hinge_embedding_loss(embedding[i:i+1], sample['num_planes'][i:i+1],
                                                                      instance[i:i+1], device)
@@ -327,8 +327,7 @@ def train(_run, _log):
             losses_normal.update(loss_normal.item())
             losses_instance.update(loss_instance.item())
 
-            # update time
-            batch_time.update(time.time() - tic)
+            # update timecd
             tic = time.time()
 
             if iter % cfg.print_interval == 0:
@@ -526,6 +525,7 @@ def eval(_run, _log):
             depth = 255 - np.clip(depth / 5 * 255, 0, 255).astype(np.uint8)
             depth = cv2.cvtColor(cv2.resize(depth, (w, h)), cv2.COLOR_GRAY2BGR)
 
+            gt_depth_origin = cv2.cvtColor(cv2.resize(gt_depth, (w, h)), cv2.COLOR_GRAY2BGR)
             gt_depth = 255 - np.clip(gt_depth / 5 * 255, 0, 255).astype(np.uint8)
             gt_depth = cv2.cvtColor(cv2.resize(gt_depth, (w, h)), cv2.COLOR_GRAY2BGR)
 
@@ -540,10 +540,14 @@ def eval(_run, _log):
             cv2.imwrite("results/%d_segmentation.png"%iter, image)
 
             # save some point clouds
-            Camera_fx = 517.97
-            Camera_fy = 517.97
+            Camera_fx = 518.8
+            Camera_fy =518.8
             Camera_cx = 320
             Camera_cy = 240
+            #Camera_fy = 517.97
+
+            #Camera_cx = 320
+            #Camera_cy = 240
             ratio_x = 640/256.0
             ratio_y = 480/192.0
             points = []
@@ -552,16 +556,17 @@ def eval(_run, _log):
             points_feat = np.array([])
             for v in range(h):
                 for u in range(w):
-                    color = image[v, u]
+                    color = image[v, u]#row v, col w
                     color_instance=pred_seg[v, u]
                     label_instance=predict_segmentation[v, u]
-                    Z = (depth[v, u]/scalingFactor)[0]
+                    # print(gt_depth_origin[v,u])
+                    Z = (gt_depth_origin[v, u]/scalingFactor)[0]
                     if Z == 0: continue
                     # X = (u - Camera_cx) * Z / Camera_fx
                     # Y = (v - Camera_cy) * Z / Camera_fy
-                    X = (u - Camera_cx/ratio_x) * Z / Camera_fx*ratio_x
-                    Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
-                    points_feat = np.concatenate((points_feat, [X,Z,Y,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
+                    X = (u - Camera_cx/2) * Z / Camera_fx
+                    Y = (v - Camera_cy/2) * Z / Camera_fy
+                    points_feat = np.concatenate((points_feat, [X,Y,Z,color_instance[0],color_instance[1],color_instance[2]]), axis = 0)
             points_feat = points_feat.reshape((-1,6))
             save_pcd("results/%d_points.ply"%iter, points_feat)
 
