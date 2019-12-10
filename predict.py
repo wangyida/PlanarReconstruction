@@ -135,6 +135,7 @@ def predict(_run, _log):
         mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
         # visualize depth map as PlaneNet
+        depth_real = cv2.cvtColor(cv2.resize(depth, (w, h)), cv2.COLOR_GRAY2BGR)
         depth = 255 - np.clip(depth / 5 * 255, 0, 255).astype(np.uint8)
         depth = cv2.cvtColor(cv2.resize(depth, (w, h)), cv2.COLOR_GRAY2BGR)
 
@@ -155,17 +156,17 @@ def predict(_run, _log):
         Camera_cy = 240
         points = []
         points_instance=[]
+        ratio_x = 640/256.0
+        ratio_y = 480/192.0
         scalingFactor = 1.0
         for v in range(h):
             for u in range(w):
                 color = image[v, u]
                 color_instance=pred_seg[v,u]
-                Z = (depth[v, u]/scalingFactor)[0]
+                Z = (depth_real[v, u]/scalingFactor)[0]
                 if Z == 0: continue
-                # X = (u - Camera_cx/2) * Z / Camera_fx*2
-                # Y = (v - Camera_cy/2) * Z / Camera_fy*2
-                X = (u - Camera_cx) * Z / Camera_fx
-                Y = (v - Camera_cy) * Z / Camera_fy
+                X = (u - Camera_cx/ratio_x) * Z / Camera_fx*ratio_x
+                Y = (v - Camera_cy/ratio_y) * Z / Camera_fy*ratio_y
                 # points.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color[2], color[1], color[0]))
                 points_instance.append("%f %f %f %d %d %d 0\n" % (X, Y, Z, color_instance[2], color_instance[1], color_instance[0]))
         file1 = open('./pointCloud_instance.ply', "w")
@@ -183,11 +184,6 @@ def predict(_run, _log):
                        %s
                        ''' % (len(points_instance), "".join(points_instance)))
         file1.close()
-
-        depth_norm = cv2.cvtColor(cv2.resize(depth_norm, (w, h)), cv2.COLOR_GRAY2BGR)
-        cv2.imwrite("./depth.png", depth_norm)
-        #cv2.imwrite("./rgb.png",image)
-
 
         image = np.concatenate((image, pred_seg, blend_pred, mask, depth, normal_plot), axis=1)
 
