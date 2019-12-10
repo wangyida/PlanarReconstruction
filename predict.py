@@ -150,10 +150,17 @@ def predict(_run, _log):
         # Camera_cx = 320.1
         # Camera_cy = 247.6
 
+        # correct parameters
         Camera_fx = 518.8
         Camera_fy = 518.8
         Camera_cx = 320
         Camera_cy = 240
+
+        # cabin parrameters
+        Camera_fx = 440.66
+        Camera_fy = 531.72
+        Camera_cx = 361.77
+        Camera_cy = 215.79
         points = []
         points_instance=[]
         ratio_x = 640/256.0
